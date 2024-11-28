@@ -1,0 +1,301 @@
+[
+    {
+        "id": "b8ea2b76756e7558",
+        "type": "tab",
+        "label": "Fluxo 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "4bb66e4fbf3e10dc",
+        "type": "mqtt in",
+        "z": "b8ea2b76756e7558",
+        "name": "",
+        "topic": "home/sensor/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "4f4619caad5c61d5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 210,
+        "y": 100,
+        "wires": [
+            [
+                "d721e5bab06a8e97",
+                "4b3988a6419bd47d"
+            ]
+        ]
+    },
+    {
+        "id": "d721e5bab06a8e97",
+        "type": "influxdb out",
+        "z": "b8ea2b76756e7558",
+        "influxdb": "90971f2a6fef0fe0",
+        "name": "InfluxDB Account",
+        "measurement": "Temperatura",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "Node-RED",
+        "bucket": "bucket_dados",
+        "x": 930,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "02c4f70b8dd06381",
+        "type": "mqtt in",
+        "z": "b8ea2b76756e7558",
+        "name": "",
+        "topic": "home/sensor/humidity",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "4f4619caad5c61d5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 180,
+        "wires": [
+            [
+                "5566a786948a9aed",
+                "a48566aa2e21631c"
+            ]
+        ]
+    },
+    {
+        "id": "d89d8c50b07f00df",
+        "type": "mqtt in",
+        "z": "b8ea2b76756e7558",
+        "name": "",
+        "topic": "home/sensor/air_quality",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "4f4619caad5c61d5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 240,
+        "wires": [
+            [
+                "ebaa9daa3dae8e4b",
+                "9d800be651fd7cab"
+            ]
+        ]
+    },
+    {
+        "id": "002db4a2c0a194a1",
+        "type": "function",
+        "z": "b8ea2b76756e7558",
+        "name": "Recomendacao",
+        "func": "// Recupera os valores de temperatura, umidade e qualidade do ar do fluxo\nvar temp = flow.get('temperature') || null;\nvar humidity = flow.get('humidity') || null;\nvar airQuality = flow.get('air_quality') || null;\n\nvar message = {\n    topic: \"home/sensor/recommendations\",\n    payload: {}\n};\n\n// Verifica se todos os dados estão disponíveis\nif (temp !== null && humidity !== null && airQuality !== null) {\n    // Lógica de recomendação\n    var recommendation = \"\";\n    \n    if (temp > 30 && humidity < 30 && [\"Moderada\", \"Não saudável para grupos sensíveis\", \"Não saudável\", \"Muito não saudável\", \"Perigoso\"].includes(airQuality)) {\n        recommendation = \"Faz muito calor, a umidade está baixa e a qualidade do ar está ruim. Recomendação: Hidrate-se bem, permaneça em locais fechados e evite exercícios ao ar livre.\";\n    } else if (temp > 30 && humidity > 70 && [\"Moderada\", \"Não saudável para grupos sensíveis\"].includes(airQuality)) {\n        recommendation = \"Faz calor, a umidade está alta e a qualidade do ar é moderada. Recomendação: Evite ambientes abafados, hidrate-se e prefira exercícios leves em locais ventilados.\";\n    } else if (temp < 15 && humidity > 70 && [\"Boa\", \"Moderada\"].includes(airQuality)) {\n        recommendation = \"Está frio, com alta umidade e qualidade do ar razoável. Recomendação: Vista roupas quentes e mantenha os ambientes bem ventilados para evitar mofo.\";\n    } else if (temp < 15 && humidity < 30 && [\"Não saudável\", \"Muito não saudável\", \"Perigoso\"].includes(airQuality)) {\n        recommendation = \"Está frio, a umidade está baixa e a qualidade do ar é péssima. Recomendação: Permaneça em locais aquecidos e bem hidratados. Considere umidificar o ar e evite sair.\";\n    } else if (20 <= temp && temp <= 30 && 30 <= humidity && humidity <= 60 && airQuality == \"Boa\") {\n        recommendation = \"O clima está agradável, com umidade ideal e boa qualidade do ar. Recomendação: Aproveite para realizar atividades ao ar livre, mantendo-se hidratado.\";\n    } else if ([\"Não saudável para grupos sensíveis\", \"Não saudável\", \"Muito não saudável\", \"Perigoso\"].includes(airQuality)) {\n        recommendation = \"A qualidade do ar não está boa, independentemente das outras condições. Recomendação: Limite sua exposição ao ar externo e prefira locais fechados com purificadores de ar.\";\n    } else {\n        recommendation = \"As condições estão moderadas. Adapte-se ao clima e aproveite seu dia!\";\n    }\n\n    // Cria a mensagem incluindo os valores das variáveis\n    message.payload.recommendation = `A temperatura atual é ${temp}°C, a umidade é ${humidity}% e a qualidade do ar é '${airQuality}'. ${recommendation}`;\n    \n    // Retorna a mensagem de recomendação\n    return message;\n\n} else {\n    // Se algum dado estiver faltando, retorna uma mensagem padrão\n    message.payload.recommendation = \"Não foi possível fornecer recomendações, pois os dados de temperatura, umidade ou qualidade do ar não estão disponíveis.\";\n    return message;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 460,
+        "wires": [
+            [
+                "7b1d7a330dd222a9"
+            ]
+        ]
+    },
+    {
+        "id": "4b3988a6419bd47d",
+        "type": "function",
+        "z": "b8ea2b76756e7558",
+        "name": "set_temperature",
+        "func": "flow.set('temperature', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 320,
+        "wires": [
+            [
+                "002db4a2c0a194a1"
+            ]
+        ]
+    },
+    {
+        "id": "5566a786948a9aed",
+        "type": "function",
+        "z": "b8ea2b76756e7558",
+        "name": "set_humidity",
+        "func": "flow.set('humidity', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 380,
+        "wires": [
+            [
+                "002db4a2c0a194a1"
+            ]
+        ]
+    },
+    {
+        "id": "ebaa9daa3dae8e4b",
+        "type": "function",
+        "z": "b8ea2b76756e7558",
+        "name": "set_quality",
+        "func": "flow.set('air_quality', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 440,
+        "wires": [
+            [
+                "002db4a2c0a194a1"
+            ]
+        ]
+    },
+    {
+        "id": "a48566aa2e21631c",
+        "type": "influxdb out",
+        "z": "b8ea2b76756e7558",
+        "influxdb": "90971f2a6fef0fe0",
+        "name": "InfluxDB Account",
+        "measurement": "Umidade",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "Node-RED",
+        "bucket": "bucket_dados",
+        "x": 930,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "9d800be651fd7cab",
+        "type": "influxdb out",
+        "z": "b8ea2b76756e7558",
+        "influxdb": "90971f2a6fef0fe0",
+        "name": "InfluxDB Account",
+        "measurement": "Qualidade do Ar",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "Node-RED",
+        "bucket": "bucket_dados",
+        "x": 930,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "3ac3c239102e71d3",
+        "type": "node-red-contrib-whatsapp-cmb-send-message",
+        "z": "b8ea2b76756e7558",
+        "name": "",
+        "credtype": "account",
+        "account": "05138840e7d59aed",
+        "text": "payload",
+        "phonenumbervalue": "",
+        "apikeyvalue": "",
+        "apikeyinputtypemessage": "msg",
+        "phonenumberinputtypemessage": "msg",
+        "inputtypemessage": "msg",
+        "rejectssl": false,
+        "x": 1200,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7b1d7a330dd222a9",
+        "type": "function",
+        "z": "b8ea2b76756e7558",
+        "name": "Trata Mensagem",
+        "func": "msg.payload = JSON.stringify(msg.payload); \nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 500,
+        "wires": [
+            [
+                "3ac3c239102e71d3"
+            ]
+        ]
+    },
+    {
+        "id": "4f4619caad5c61d5",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "90971f2a6fef0fe0",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": "8086",
+        "protocol": "http",
+        "database": "database",
+        "name": "InfluxDB Account",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "https://us-east-1-1.aws.cloud2.influxdata.com/",
+        "timeout": "10",
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "05138840e7d59aed",
+        "type": "node-red-contrib-whatsapp-cmb-account",
+        "name": "David"
+    }
+]
